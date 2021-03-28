@@ -1,0 +1,23 @@
+server:
+  port: 9290
+  servlet:
+    context-path: /spring-kafka
+    #context-path: '@app.context-path@'
+
+spring:
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094,localhost:9095,localhost:9096
+      group-id: group_id
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094,localhost:9095,localhost:9096
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+kafka:
+  topic:
+    name: myTopic
+  brokers: localhost:9092,localhost:9093,localhost:9094,localhost:9095,localhost:9096
