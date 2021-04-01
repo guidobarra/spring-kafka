@@ -133,3 +133,48 @@ services:
       - ./zk-single-kafka-multiple-5/kafka_5/data:/var/lib/kafka/data
     depends_on:
       - zookeeper_1
+      - kafka_1
+      - kafka_2
+      - kafka_3
+      - kafka_4
+
+  kafka_setup:
+    image: confluentinc/cp-kafka:5.5.0
+    container_name: kafka_setup
+    hostname: kafka_setup
+    environment:
+      KAFKA_BROKER_ID: ignored
+      KAFKA_ZOOKEEPER_CONNECT: ignored
+    command: "bash -c 'echo creating topic myTopic... &&
+                           kafka-topics --create --if-not-exists \
+                           --zookeeper zookeeper_1:2181 \
+                           --partitions 6 \
+                           --replication-factor 3 \
+                           --topic myTopic'"
+    restart: on-failure
+    volumes:
+      - ./zk-single-kafka-multiple-5/kafka_setup/logs:/var/log/kafka
+      - ./zk-single-kafka-multiple-5/kafka_setup/data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper_1
+      - kafka_1
+      - kafka_2
+      - kafka_3
+      - kafka_4
+      - kafka_5
+
+  spring_kafka:
+    image: spring_kafka:v1
+    container_name: spring_kafka
+    build:
+      context: ../
+      dockerfile: ./docker/dockerfile/Dockerfile
+    ports:
+      - "9290:9290"
+    depends_on:
+      - zookeeper_1
+      - kafka_1
+      - kafka_2
+      - kafka_3
+      - kafka_4
+      - kafka_5
