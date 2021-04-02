@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 #networks:
 #  demo-network:
@@ -110,7 +110,7 @@ services:
       - ./zk-single-kafka-multiple-5/kafka_4/logs:/var/log/kafka
       - ./zk-single-kafka-multiple-5/kafka_4/data:/var/lib/kafka/data
     depends_on:
-      - zookeeper_1  
+      - zookeeper_1
 
   kafka_5:
     image: confluentinc/cp-kafka:5.5.0
@@ -138,6 +138,7 @@ services:
       - kafka_3
       - kafka_4
 
+  #setup kafka, create topic. the app java create topic myTopic
   kafka_setup:
     image: confluentinc/cp-kafka:5.5.0
     container_name: kafka_setup
@@ -163,14 +164,30 @@ services:
       - kafka_4
       - kafka_5
 
-  spring_kafka:
+  spring_kafka_1:
     image: spring_kafka:v1
-    container_name: spring_kafka
+    container_name: spring_kafka_1
     build:
       context: ../
       dockerfile: ./docker/dockerfile/Dockerfile
     ports:
       - "9290:9290"
+    depends_on:
+      - zookeeper_1
+      - kafka_1
+      - kafka_2
+      - kafka_3
+      - kafka_4
+      - kafka_5
+
+  spring_kafka_2:
+    image: spring_kafka:v1
+    container_name: spring_kafka_2
+    build:
+      context: ../
+      dockerfile: ./docker/dockerfile/Dockerfile
+    ports:
+      - "9291:9290"
     depends_on:
       - zookeeper_1
       - kafka_1
