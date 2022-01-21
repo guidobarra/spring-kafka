@@ -1,9 +1,4 @@
-version: '3.8'
-
-#networks:
-#  demo-network:
-#    #name: demo-network
-#    driver: bridge
+version: '3.9'
 
 services:
   zookeeper_1:
@@ -19,10 +14,15 @@ services:
     ports:
       - "2181:2181"
     volumes:
-    - ./zk-single-kafka-multiple-5/zookeeper_1/conf:/etc/kafka/
-    - ./zk-single-kafka-multiple-5/zookeeper_1/logs:/logs
-    - ./zk-single-kafka-multiple-5/zookeeper_1/data:/var/lib/zookeeper/data
-    - ./zk-single-kafka-multiple-5/zookeeper_1/datalog:/var/lib/zookeeper/log/
+    - volume_zk_single_kafka_multiple_zookeeper_1:/var/lib/zookeeper # /etc/kafka/ and /logs and /var/lib/zookeeper/data and /var/lib/zookeeper/log/
+    networks:
+      - network_zk_single_kafka_multiple_5
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 5s
 
   kafka_1:
     image: confluentinc/cp-kafka:5.5.0
@@ -41,10 +41,17 @@ services:
       - "9092:9092"
       - "29092:29092"
     volumes:
-      - ./zk-single-kafka-multiple-5/kafka_1/logs:/var/log/kafka
-      - ./zk-single-kafka-multiple-5/kafka_1/data:/var/lib/kafka/data
+      - volume_zk_single_kafka_multiple_kafka_1:/var # dir /var/log/kafka and /var/lib/kafka/data
     depends_on:
       - zookeeper_1
+    networks:
+      - network_zk_single_kafka_multiple_5
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 5s
 
   kafka_2:
     image: confluentinc/cp-kafka:5.5.0
@@ -63,10 +70,17 @@ services:
       - "9093:9093"
       - "29093:29093"
     volumes:
-      - ./zk-single-kafka-multiple-5/kafka_2/logs:/var/log/kafka
-      - ./zk-single-kafka-multiple-5/kafka_2/data:/var/lib/kafka/data
+      - volume_zk_single_kafka_multiple_kafka_2:/var
     depends_on:
       - zookeeper_1
+    networks:
+      - network_zk_single_kafka_multiple_5
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 5s
 
   kafka_3:
     image: confluentinc/cp-kafka:5.5.0
@@ -85,10 +99,17 @@ services:
       - "9094:9094"
       - "29094:29094"
     volumes:
-      - ./zk-single-kafka-multiple-5/kafka_3/logs:/var/log/kafka
-      - ./zk-single-kafka-multiple-5/kafka_3/data:/var/lib/kafka/data
+      - volume_zk_single_kafka_multiple_kafka_2:/var
     depends_on:
       - zookeeper_1
+    networks:
+      - network_zk_single_kafka_multiple_5
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 5s
 
   kafka_4:
     image: confluentinc/cp-kafka:5.5.0
@@ -107,10 +128,17 @@ services:
       - "9095:9095"
       - "29095:29095"
     volumes:
-      - ./zk-single-kafka-multiple-5/kafka_4/logs:/var/log/kafka
-      - ./zk-single-kafka-multiple-5/kafka_4/data:/var/lib/kafka/data
+      - volume_zk_single_kafka_multiple_kafka_4:/var
     depends_on:
       - zookeeper_1
+    networks:
+      - network_zk_single_kafka_multiple_5
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 5s
 
   kafka_5:
     image: confluentinc/cp-kafka:5.5.0
@@ -129,14 +157,21 @@ services:
       - "9096:9096"
       - "29096:29096"
     volumes:
-      - ./zk-single-kafka-multiple-5/kafka_5/logs:/var/log/kafka
-      - ./zk-single-kafka-multiple-5/kafka_5/data:/var/lib/kafka/data
+      - volume_zk_single_kafka_multiple_kafka_5:/var
     depends_on:
       - zookeeper_1
       - kafka_1
       - kafka_2
       - kafka_3
       - kafka_4
+    networks:
+      - network_zk_single_kafka_multiple_5
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 5s
 
   #setup kafka, create topic. the app java create topic myTopic
   kafka_setup:
@@ -154,8 +189,7 @@ services:
                            --topic myTopic'"
     restart: on-failure
     volumes:
-      - ./zk-single-kafka-multiple-5/kafka_setup/logs:/var/log/kafka
-      - ./zk-single-kafka-multiple-5/kafka_setup/data:/var/lib/kafka/data
+      - volume_zk_single_kafka_multiple_kafka_setup:/var
     depends_on:
       - zookeeper_1
       - kafka_1
@@ -163,6 +197,8 @@ services:
       - kafka_3
       - kafka_4
       - kafka_5
+    networks:
+      - network_zk_single_kafka_multiple_5
 
   spring_kafka_1:
     image: spring_kafka:v1
@@ -172,6 +208,9 @@ services:
       dockerfile: ./docker/dockerfile/Dockerfile
     ports:
       - "9290:9290"
+    deploy:
+      restart_policy:
+        delay: 20s
     depends_on:
       - zookeeper_1
       - kafka_1
@@ -183,6 +222,9 @@ services:
   spring_kafka_2:
     image: spring_kafka:v1
     container_name: spring_kafka_2
+    deploy:
+      restart_policy:
+        delay: 20s
     build:
       context: ../
       dockerfile: ./docker/dockerfile/Dockerfile
@@ -195,3 +237,31 @@ services:
       - kafka_3
       - kafka_4
       - kafka_5
+
+volumes:
+  volume_zk_single_kafka_multiple_kafka_1:
+    driver: local
+    name: volume_zk_single_kafka_multiple_kafka_1
+  volume_zk_single_kafka_multiple_kafka_2:
+    driver: local
+    name: volume_zk_single_kafka_multiple_kafka_2
+  volume_zk_single_kafka_multiple_kafka_3:
+    driver: local
+    name: volume_zk_single_kafka_multiple_kafka_3
+  volume_zk_single_kafka_multiple_kafka_4:
+    driver: local
+    name: volume_zk_single_kafka_multiple_kafka_4
+  volume_zk_single_kafka_multiple_kafka_5:
+    driver: local
+    name: volume_zk_single_kafka_multiple_kafka_5
+  volume_zk_single_kafka_multiple_kafka_setup:
+    driver: local
+    name: volume_zk_single_kafka_multiple_kafka_setup
+  volume_zk_single_kafka_multiple_zookeeper_1:
+    driver: local
+    name: volume_zk_single_kafka_multiple_zookeeper_1
+
+networks:
+  network_zk_single_kafka_multiple_5:
+    driver: bridge
+    name: network_zk_single_kafka_multiple_5
