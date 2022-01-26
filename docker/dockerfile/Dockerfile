@@ -11,5 +11,5 @@ RUN mvn -f /home/app/pom.xml clean package
 #
 FROM openjdk:11-jre-slim
 COPY --from=build /home/app/target/spring-kafka*.jar /usr/local/lib/spring-kafka.jar
-EXPOSE 9290
-ENTRYPOINT ["/bin/sh", "-c" , "echo 'waitting....' && sleep 10 && java -jar /usr/local/lib/spring-kafka.jar"]
+EXPOSE 9292/tcp
+ENTRYPOINT ["/bin/sh", "-c" , "echo 'waitting....' && sleep 10 && java -jar -Dspring.profiles.active=beta /usr/local/lib/spring-kafka.jar"]
