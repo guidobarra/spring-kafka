@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   zookeeper_1:
-    image: confluentinc/cp-zookeeper:5.5.0
+    image: confluentinc/cp-zookeeper:7.0.1
     container_name: zookeeper_1
     hostname: zookeeper_1
     environment:
@@ -10,6 +10,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
       ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: INFO
+      ZOOKEEPER_SERVERS: zookeeper_1:2888:3888;zookeeper_2:2888:3888;zookeeper_3:2888:3888
       # ZOOKEEPER_LOG4J_LOGGERS: "INFO,CONSOLE,ROLLINGFILE" -- No Include
     ports:
       - "2181:2181"
@@ -22,13 +23,57 @@ services:
         condition: on-failure
         max_attempts: 5
 
+  zookeeper_2:
+    image: confluentinc/cp-zookeeper:7.0.1
+    container_name: zookeeper_2
+    hostname: zookeeper_2
+    environment:
+      ZOOKEEPER_SERVER_ID: 2
+      ZOOKEEPER_CLIENT_PORT: 2182
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: INFO
+      ZOOKEEPER_SERVERS: zookeeper_1:2888:3888;zookeeper_2:2888:3888;zookeeper_3:2888:3888
+      # ZOOKEEPER_LOG4J_LOGGERS: "INFO,CONSOLE,ROLLINGFILE" -- No Include
+    ports:
+      - "2182:2182"
+    volumes:
+      - volume_zk_single_kafka_multiple_zookeeper_2:/var/lib/zookeeper
+    networks:
+      - network_zk_single_kafka_multiple_5
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5
+
+  zookeeper_3:
+    image: confluentinc/cp-zookeeper:7.0.1
+    container_name: zookeeper_3
+    hostname: zookeeper_3
+    environment:
+      ZOOKEEPER_SERVER_ID: 3
+      ZOOKEEPER_CLIENT_PORT: 2183
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: INFO
+      ZOOKEEPER_SERVERS: zookeeper_1:2888:3888;zookeeper_2:2888:3888;zookeeper_3:2888:3888
+      # ZOOKEEPER_LOG4J_LOGGERS: "INFO,CONSOLE,ROLLINGFILE" -- No Include
+    ports:
+      - "2183:2183"
+    volumes:
+      - volume_zk_single_kafka_multiple_zookeeper_3:/var/lib/zookeeper
+    networks:
+      - network_zk_single_kafka_multiple_5
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5
+
   kafka_1:
-    image: confluentinc/cp-kafka:5.5.0
+    image: confluentinc/cp-kafka:7.0.1
     container_name: kafka_1
     hostname: kafka_1
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper_1:2181"
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper_1:2181,zookeeper_2:2182,zookeeper_3:2183"
       KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka_1:29092,LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
@@ -42,6 +87,8 @@ services:
       - volume_zk_single_kafka_multiple_kafka_1:/var # dir /var/log/kafka and /var/lib/kafka/data
     depends_on:
       - zookeeper_1
+      - zookeeper_2
+      - zookeeper_3
     networks:
       - network_zk_single_kafka_multiple_5
     deploy:
@@ -50,12 +97,12 @@ services:
         max_attempts: 5
 
   kafka_2:
-    image: confluentinc/cp-kafka:5.5.0
+    image: confluentinc/cp-kafka:7.0.1
     container_name: kafka_2
     hostname: kafka_2
     environment:
       KAFKA_BROKER_ID: 2
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper_1:2181"
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper_1:2181,zookeeper_2:2182,zookeeper_3:2183"
       KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka_2:29093,LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
@@ -69,6 +116,8 @@ services:
       - volume_zk_single_kafka_multiple_kafka_2:/var
     depends_on:
       - zookeeper_1
+      - zookeeper_2
+      - zookeeper_3
     networks:
       - network_zk_single_kafka_multiple_5
     deploy:
@@ -77,12 +126,12 @@ services:
         max_attempts: 5
 
   kafka_3:
-    image: confluentinc/cp-kafka:5.5.0
+    image: confluentinc/cp-kafka:7.0.1
     container_name: kafka_3
     hostname: kafka_3
     environment:
       KAFKA_BROKER_ID: 3
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper_1:2181"
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper_1:2181,zookeeper_2:2182,zookeeper_3:2183"
       KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka_3:29094,LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9094
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
@@ -96,6 +145,8 @@ services:
       - volume_zk_single_kafka_multiple_kafka_2:/var
     depends_on:
       - zookeeper_1
+      - zookeeper_2
+      - zookeeper_3
     networks:
       - network_zk_single_kafka_multiple_5
     deploy:
@@ -104,12 +155,12 @@ services:
         max_attempts: 5
 
   kafka_4:
-    image: confluentinc/cp-kafka:5.5.0
+    image: confluentinc/cp-kafka:7.0.1
     container_name: kafka_4
     hostname: kafka_4
     environment:
       KAFKA_BROKER_ID: 4
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper_1:2181"
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper_1:2181,zookeeper_2:2182,zookeeper_3:2183"
       KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka_4:29095,LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9095
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
@@ -123,6 +174,8 @@ services:
       - volume_zk_single_kafka_multiple_kafka_4:/var
     depends_on:
       - zookeeper_1
+      - zookeeper_2
+      - zookeeper_3
     networks:
       - network_zk_single_kafka_multiple_5
     deploy:
@@ -131,12 +184,12 @@ services:
         max_attempts: 5
 
   kafka_5:
-    image: confluentinc/cp-kafka:5.5.0
+    image: confluentinc/cp-kafka:7.0.1
     container_name: kafka_5
     hostname: kafka_5
     environment:
       KAFKA_BROKER_ID: 5
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper_1:2181"
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper_1:2181,zookeeper_2:2182,zookeeper_3:2183"
       KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka_5:29096,LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9096
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
@@ -150,10 +203,8 @@ services:
       - volume_zk_single_kafka_multiple_kafka_5:/var
     depends_on:
       - zookeeper_1
-      - kafka_1
-      - kafka_2
-      - kafka_3
-      - kafka_4
+      - zookeeper_2
+      - zookeeper_3
     networks:
       - network_zk_single_kafka_multiple_5
     deploy:
@@ -163,7 +214,7 @@ services:
 
   #setup kafka, create topic. the app java create topic myTopic
   kafka_setup:
-    image: confluentinc/cp-kafka:5.5.0
+    image: confluentinc/cp-kafka:7.0.1
     container_name: kafka_setup
     hostname: kafka_setup
     environment:
@@ -171,7 +222,7 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: ignored
     command: "bash -c 'echo creating topic myTopic... &&
                            kafka-topics --create --if-not-exists \
-                           --zookeeper zookeeper_1:2181 \
+                           --bootstrap-server kafka_1:29092,kafka_2:29093,kafka_3:29094,kafka_4:29095,kafka_5:29096 \
                            --partitions 6 \
                            --replication-factor 3 \
                            --topic myTopic'"
@@ -179,6 +230,8 @@ services:
       - volume_zk_single_kafka_multiple_kafka_setup:/var
     depends_on:
       - zookeeper_1
+      - zookeeper_2
+      - zookeeper_3
       - kafka_1
       - kafka_2
       - kafka_3
@@ -193,47 +246,66 @@ services:
         max_attempts: 5
         window: 60s
 
-  spring_kafka_1:
-    image: spring_kafka:v1
-    container_name: spring_kafka_1
-    build:
-      context: ../
-      dockerfile: ./docker/dockerfile/Dockerfile
-    ports:
-      - "9293:9292"
+  kafka_manager:
+    image: kafkamanager/kafka-manager
+    container_name: kafkamanager
     networks:
       - network_zk_single_kafka_multiple_5
     deploy:
       restart_policy:
-        delay: 20s
+        condition: on-failure
+        delay: 60s
+        max_attempts: 5
+        window: 60s
+    ports:
+      - "9000:9000"
     depends_on:
       - zookeeper_1
+      - zookeeper_2
+      - zookeeper_3
       - kafka_1
       - kafka_2
       - kafka_3
       - kafka_4
       - kafka_5
+    environment:
+      ZK_HOSTS: "zookeeper_1:2181,zookeeper_2:2182,zookeeper_3:2183"
 
-  spring_kafka_2:
-    image: spring_kafka:v1
-    container_name: spring_kafka_2
-    build:
-      context: ../
-      dockerfile: ./docker/dockerfile/Dockerfile
-    ports:
-      - "9294:9292"
-    networks:
-      - network_zk_single_kafka_multiple_5
-    deploy:
-      restart_policy:
-        delay: 20s
+  control_center:
+    image: confluentinc/cp-enterprise-control-center:7.0.1
+    hostname: control_center
+    container_name: control_center
     depends_on:
-      - zookeeper_1
       - kafka_1
       - kafka_2
       - kafka_3
       - kafka_4
       - kafka_5
+      #- schema-registry
+      #- ksqldb-server
+    networks:
+      - network_zk_single_kafka_multiple_5
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 60s
+        max_attempts: 5
+        window: 60s
+    ports:
+      - "9021:9021"
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'kafka_1:29092,kafka_2:29093,kafka_3:29094,kafka_4:29095,kafka_5:29096'
+      CONTROL_CENTER_ZOOKEEPER_CONNECT: "zookeeper_1:2181,zookeeper_2:2182,zookeeper_3:2183"
+      #CONTROL_CENTER_CONNECT_CLUSTER: 'connect:8083'
+      #CONTROL_CENTER_KSQL_KSQLDB1_URL: "http://ksqldb-server:8088"
+      #CONTROL_CENTER_KSQL_KSQLDB1_ADVERTISED_URL: "http://localhost:8088"
+     # CONTROL_CENTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+      PORT: 9021
+
 
 volumes:
   volume_zk_single_kafka_multiple_kafka_1:
@@ -257,6 +329,12 @@ volumes:
   volume_zk_single_kafka_multiple_zookeeper_1:
     driver: local
     name: volume_zk_single_kafka_multiple_zookeeper_1
+  volume_zk_single_kafka_multiple_zookeeper_2:
+    driver: local
+    name: volume_zk_single_kafka_multiple_zookeeper_2
+  volume_zk_single_kafka_multiple_zookeeper_3:
+    driver: local
+    name: volume_zk_single_kafka_multiple_zookeeper_3
 
 networks:
   network_zk_single_kafka_multiple_5:
